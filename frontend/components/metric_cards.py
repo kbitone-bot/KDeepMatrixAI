@@ -31,6 +31,23 @@ def render_metric_cards(metrics: dict):
         cols[2].metric(label="B50 수명 (년)", value=f"{lifetime.get('lifetime_50p', 'N/A'):.2f}")
         return
     
+    # 004 Simulation metrics
+    if "y_pred" in metrics:
+        cols = st.columns(3)
+        cols[0].metric(label="예측 작업량", value=f"{metrics.get('y_pred', 'N/A')}")
+        cols[1].metric(label="90% PI 하한", value=f"{metrics.get('pi_lower', 'N/A')}")
+        cols[2].metric(label="90% PI 상한", value=f"{metrics.get('pi_upper', 'N/A')}")
+        return
+    
+    # 005 Recommendation metrics
+    if "recommendation_count" in metrics:
+        cols = st.columns(3)
+        cols[0].metric(label="추천 개수", value=f"{metrics.get('recommendation_count', 'N/A')}")
+        cols[1].metric(label="클리스터", value=f"{metrics.get('cluster', 'N/A')}")
+        avg_sim = metrics.get('avg_similarity')
+        cols[2].metric(label="평균 유사도", value=f"{avg_sim:.4f}" if avg_sim is not None else "N/A")
+        return
+    
     # 007 IMQC metrics
     current_total = metrics.get("current_total")
     required_total = metrics.get("required_total")
