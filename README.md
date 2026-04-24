@@ -346,12 +346,24 @@ outputs/{analysis_id}/
 ## 🧪 테스트
 
 ```bash
-# 빠른 통합 테스트 (데이터 로드 + RAM 분석)
-python tests/test_quick.py
+# 전체 테스트 실행 (주의: 001/002/007 분석 테스트는 약 2분 소요)
+pytest tests/ -v
 
-# 단위 테스트 (데이터 로더, 날짜 변환, RAM 서비스)
-python tests/test_ram_service.py
+# 빠른 테스트만 (AI Serving + API + UI)
+pytest tests/test_api_integration.py tests/test_streamlit_ui.py -v
+
+# 서비스 테스트 (001~007 전체)
+pytest tests/test_all_services.py -v
+
+# 개별 테스트
+pytest tests/test_all_services.py::TestSimService -v      # 004 AI Serving
+pytest tests/test_all_services.py::TestRecommendService -v # 005 AI 추천
 ```
+
+**테스트 현황:**
+- 13개 서비스 테스트 (001/002/004/005/007 + 성능)
+- 9개 API 통합 테스트 (FastAPI 엔드포인트)
+- 3개 Streamlit UI 테스트 (서버 기동/로드/번들)
 
 ---
 

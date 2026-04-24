@@ -124,12 +124,21 @@ class RecommendAnalysisService(BaseAnalysisService):
         global_rows = np.array(sub_idx)[idxs_local[0]]
         out = df_display.iloc[global_rows].copy()
         out["similarity"] = 1.0 - dist[0]
-        out = out[out["similarity"] > 0]
+        # 코사인 거리 0~2 → 유사도 -1~1. 음수 유사도는 매우 낮은 유사도로 처리
+        out = out[out["similarity"] > -0.5]
         
         out = out.sort_values("similarity", ascending=False)
         out = out.drop_duplicates(subset=[ID_COL], keep="first")
         
         # 유사도 1.0(자기 자신) 제거
         out = out[out[ID_COL].astype(str).str.upper().str.strip() != part.upper().strip()]
+        
+        # 결과가 너무 적으면 임계값 완화
+        if len(out) < topn:
+            out = df_display.iloc[global_rows].copy()
+            out["similarity"] = 1.0 - dist[0]
+            out = out.sort_values("similarity", ascending=False)
+            out = out.drop_duplicates(subset=[ID_COL], keep="first")
+            out = out[out[ID_COL].astype(str).str.upper().str.strip() != part.upper().strip()]
         
         return out.head(topn).reset_index(drop=True), cluster_id

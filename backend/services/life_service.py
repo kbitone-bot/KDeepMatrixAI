@@ -41,7 +41,7 @@ class LifeAnalysisService(BaseAnalysisService):
             df_raw = self._load_data(model_dir)
             validate_columns(df_raw, self.REQUIRED_COLS)
             
-            no_pn = params.get("no_pn") or None
+            no_pn = params.get("pn") or params.get("no_pn") or None
             
             df_processed = self._preprocess(df_raw, no_pn)
             if df_processed.empty:

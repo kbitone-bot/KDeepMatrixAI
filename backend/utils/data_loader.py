@@ -4,6 +4,9 @@ from typing import List, Optional
 from backend.core.exceptions import DataLoadError, ColumnNotFoundError
 from backend.utils.date_utils import ensure_datetime
 
+# DataFrame cache: key = "file_path:mtime", value = DataFrame
+_DF_CACHE = {}
+
 
 def list_data_files(model_dir: Path) -> List[Path]:
     """List all data files in the model's data directory."""
@@ -17,17 +20,23 @@ def list_data_files(model_dir: Path) -> List[Path]:
 
 
 def load_dataframe(file_path: Path, sheet_name: Optional[str] = None) -> pd.DataFrame:
-    """Load a dataframe from various file formats."""
+    """Load a dataframe from various file formats (with caching)."""
+    cache_key = f"{file_path.resolve()}:{file_path.stat().st_mtime}:{sheet_name}"
+    if cache_key in _DF_CACHE:
+        return _DF_CACHE[cache_key].copy()
+    
     try:
         suffix = file_path.suffix.lower()
         if suffix == ".csv":
-            return pd.read_csv(file_path)
+            df = pd.read_csv(file_path)
         elif suffix == ".xlsb":
-            return pd.read_excel(file_path, engine="pyxlsb", sheet_name=sheet_name or 0)
+            df = pd.read_excel(file_path, engine="pyxlsb", sheet_name=sheet_name or 0)
         elif suffix in {".xlsx", ".xls"}:
-            return pd.read_excel(file_path, sheet_name=sheet_name or 0)
+            df = pd.read_excel(file_path, sheet_name=sheet_name or 0)
         else:
             raise DataLoadError(f"Unsupported file format: {suffix}")
+        _DF_CACHE[cache_key] = df.copy()
+        return df.copy()
     except Exception as e:
         raise DataLoadError(f"Failed to load {file_path}: {e}")
 
