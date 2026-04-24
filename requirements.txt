@@ -1,0 +1,15 @@
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+streamlit==1.40.0
+pandas==2.2.3
+numpy==1.26.4
+pyxlsb==1.0.10
+openpyxl==3.1.5
+lifelines==0.30.0
+scipy==1.14.1
+plotly==5.24.1
+pydantic==2.9.2
+python-multipart==0.0.17
+pillow==11.0.0
+kaleido==0.2.1
+requests==2.32.3

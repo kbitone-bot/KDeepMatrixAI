@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+outputs/
+.playwright-mcp/
+*.egg-info/
+.venv/
+venv/
+env/
+.idea/
+.vscode/
+*.log
+*.png
+!docs/**/*.png
