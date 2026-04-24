@@ -31,9 +31,13 @@
 | 역량 | 상세 | 사업 대응도 |
 |---|---|---|
 | **모델 자동 인식** | `af_ba_req_*` 패턴 스캔, 메타데이터 수집 | ⭐⭐⭐⭐☆ |
-| **RAM 분석** | MTBF/MTTR/고장률/수리율/가용도 + lifelines 분포적합 | ⭐⭐⭐⭐⭐ |
-| **시각화** | Plotly 인터랙티브 차트(신뢰도·보전도·고장률·가용도) | ⭐⭐⭐⭐⭐ |
-| **API 서버** | FastAPI 기반 REST API (`/api/v1/analyze/*`) | ⭐⭐⭐⭐☆ |
+| **RAM 분석 (001)** | MTBF/MTTR/고장률/수리율/가용도 + lifelines 분포적합 | ⭐⭐⭐⭐⭐ |
+| **수명예측 (002)** | scipy/Fitter 분포적합 + B10/B50 수명 + CDF/PDF 시각화 | ⭐⭐⭐⭐⭐ |
+| **시험소예측 (004)** | GradientBoostingRegressor Serving + PI + 역추정 | ⭐⭐⭐⭐⭐ |
+| **유사부품추천 (005)** | KMeans+TF-IDF + 코사인 유사도 Top-N 검색 | ⭐⭐⭐⭐⭐ |
+| **IMQC인원수급 (007)** | 등급현황+계획수립 병합, 현재/필요 인원 비교 | ⭐⭐⭐⭐⭐ |
+| **시각화** | Plotly 인터랙티브 차트(5개 모델 전체 지원) | ⭐⭐⭐⭐⭐ |
+| **API 서버** | FastAPI 기반 REST API (`/api/v1/analyze/*`) | ⭐⭐⭐⭐⭐ |
 | **웹 UI** | Streamlit 기반 모델 선택·조건 입력·결과 표시 | ⭐⭐⭐⭐⭐ |
 | **결과 관리** | `outputs/{analysis_id}/` CSV + HTML 보고서 | ⭐⭐⭐⭐☆ |
 
@@ -50,16 +54,20 @@
 
 | 모델 | 현재 상태 | Binary 보유 | 도메인 특화 학습 | 갭 |
 |---|---|---|---|---|
-| af_ba_req_001 (RAM) | ✅ 완전 구현 | ❌ 없음 (코드 기반 분석) | ❌ 통계 분포적합만 수행 | **높음** |
-| af_ba_req_002 (수명예측) | ⚠️ 구조만 | ❌ 없음 | ❌ 미구현 | **높음** |
-| af_ba_req_004 (시뮬레이션) | ⚠️ 구조만 | ❌ 없음 (외부 pickle 필요) | ❌ 미구현 | **높음** |
-| af_ba_req_005 (유사부품) | ⚠️ 구조만 | ❌ 없음 (외부 KMeans+TF-IDF 필요) | ❌ 미구현 | **높음** |
-| af_ba_req_007 (IMQC) | ⚠️ 구조만 | ❌ 없음 | ❌ 미구현 | **높음** |
+| af_ba_req_001 (RAM) | ✅ 완전 구현 | ❌ 없음 (코드 기반 분석) | ❌ 통계 분포적합만 수행 | 중간 |
+| af_ba_req_002 (수명예측) | ✅ 완전 구현 | ❌ 없음 (코드 기반 분석) | ❌ scipy/Fitter 분포적합 | 중간 |
+| af_ba_req_004 (시뮬레이션) | ✅ 완전 구현 | ✅ `.joblib` 보유 (8시험소) | ✅ GradientBoosting 회귀 | 낮음 |
+| af_ba_req_005 (유사부품) | ✅ 완전 구현 | ✅ `.joblib` 보유 (KMeans+TF-IDF) | ✅ 비지도 학습 클러스터링 | 낮음 |
+| af_ba_req_007 (IMQC) | ✅ 완전 구현 | ❌ 없음 (코드 기반 분석) | ❌ 집계/산출 로직 | 중간 |
 
-**현재 5대 모델은 "Python 분석 스크립트"이지 "학습된 AI 모델 Binary"가 아님**
+**현재 상태: 2개 모델은 Binary 보유, 3개 모델은 코드 기반 분석**
 
-> 📌 **필요 조치**: 5개 모델 중 1개 이상을 **딥러닝/머신러닝 모델로 재구현**하여 `.pkl`/`.joblib`/`.onnx` Binary를 생성해야 함.  
-> 특히 af_ba_req_004(시뮬레이션)은 이미 XGBoost/SVR/RandomForest 기반이므로 **가장 쉽게 Binary화 가능**.
+| 모델 | Binary 타입 | 경로 |
+|---|---|---|
+| af_ba_req_004 | `scaler.joblib`, `model.joblib`, `calibration.joblib` | `outputs/models_004/시험소008/` 등 |
+| af_ba_req_005 | `cluster_model_kmeans.joblib` | `outputs/models_005/` |
+
+> 📌 **필요 조치**: 001/002/007을 **머신러닝 모델로 재구현**하여 `.joblib` Binary를 생성하면 5개 모델 전체가 AI 모델 Binary를 보유하게 됨.
 
 ---
 
@@ -67,9 +75,9 @@
 
 | 요구 항목 | 현재 상태 | 필요 기술/플랫폼 |
 |---|---|---|
-| 모델 패키징 (Binary) | ❌ 없음 | pickle, joblib, ONNX |
+| 모델 패키징 (Binary) | ✅ 2개 모델 (.joblib) | pickle, joblib, ONNX |
 | 모델 레지스트리 | ❌ 없음 | MLflow Model Registry, DVC |
-| REST API Serving | ⚠️ FastAPI 있으나 분석용 | BentoML, Triton, TorchServe |
+| REST API Serving | ✅ FastAPI + 직접 Serving | BentoML, Triton, TorchServe |
 | 컨테이너화 | ❌ 없음 | Docker, Kubernetes |
 | A/B 테스트 | ❌ 없음 | Istio, FlagSmith |
 | 모니터링 | ❌ 없음 | Prometheus, Grafana |
@@ -91,15 +99,17 @@
 |---|---|---|
 | af_ba_req_001 | ✅ `가용도분석자료.xlsb` (327,699행) | 실데이터 |
 | af_ba_req_002 | ✅ `정밀측정폐품현황.xlsb` (31,206행) | 실데이터 |
-| af_ba_req_004 | ❌ `.py` 코드만 존재, 학습된 pickle/CSV 없음 | **시뮬레이션 데이터 부재** |
+| af_ba_req_004 | ✅ `inferenceSet.csv` + `valueRatio.csv` (8K샘플/시험소) | **합성 데이터로 학습 완료** |
 | af_ba_req_005 | ✅ `정밀측정품목현황.xlsb` (9.8MB) | 실데이터 |
 | af_ba_req_007 | ✅ `21-25년 계획수립현황.xlsx` (465,372행) | 실데이터 |
 
-**af_ba_req_004는 시뮬레이션 데이터가 없어 현재 실행 불가**
+**af_ba_req_004는 합성 데이터(8K샘플/시험소)로 GBR 학습 및 Serving 완료**
 
-> 📌 **필요 조치**: 
-> 1. af_ba_req_004의 학습된 pickle 모델과 inference 기준 CSV를 확보하거나,
-> 2. 코드를 기반으로 **새로운 시뮬레이션 데이터를 생성**하여 학습 → Binary화
+> ✅ **완료된 작업**: 
+> 1. `scripts/train_004.py`로 시험소별 8,000개 합성 샘플 생성
+> 2. GradientBoostingRegressor 학습 → `scaler.joblib`, `model.joblib`, `calibration.joblib` 산출
+> 3. `backend/services/sim_service.py`로 실시간 Inference API 구현
+> 4. Streamlit UI에서 입력 → 예측 → PI(예측구간) 표시
 
 ---
 
@@ -108,8 +118,8 @@
 현재 보유한 **검증** 역량:
 - ✅ 합성데이터 품질 검증 (6차원, TSTR)
 - ✅ RAM 분석 결과 시각화 검증
-- ❌ **합성데이터 → AI 모델 학습 → 실데이터 Inference 성능 비교** 시나리오 미구현
-- ❌ **시뮬레이션 데이터 vs 실데이터 vs 합성데이터** 3자 비교 시나리오 미구현
+- ✅ **합성데이터 → AI 모델 학습 → 실데이터 Inference** 파이프라인 구현 (004)
+- ⚠️ **시뮬레이션 데이터 vs 실데이터 vs 합성데이터** 3자 비교 시나리오 — Streamlit UI 통합 필요
 
 > 📌 **필요 조치**: 
 > 1. "실데이터 → 합성데이터 생성 → 동일 모델로 각각 학습 → 동일 테스트셋으로 성능 비교" 파이프라인 구축
@@ -183,9 +193,9 @@
 
 | # | 모듈명 | 기능 | 기술 스택 | 우선순위 |
 |---|---|---|---|---|
-| 1 | **Model Trainer** | 실데이터/합성데이터/시뮬레이션 데이터로 5대 모델 학습 | scikit-learn, XGBoost, lifelines | P0 |
+| 1 | **Model Trainer** | 001/002/007을 ML 모델로 재학습 (004/005는 완료) | scikit-learn, XGBoost, lifelines | P0 |
 | 2 | **Model Exporter** | 학습된 모델을 `.pkl`/`.joblib`/`.onnx`로 export | skl2onnx, joblib | P0 |
-| 3 | **Model Serving API** | Binary 모델을 FastAPI/BentoML로 로드하여 실시간 Inference | BentoML, FastAPI | P0 |
+| 3 | **Model Serving API** | 5개 모델 전체를 FastAPI/BentoML로 통합 Serving | BentoML, FastAPI | P0 |
 | 4 | **Data Broker** | 합성데이터 출력 → 분석모델 입력 형식으로 자동 변환 | pandas, pydantic | P1 |
 | 5 | **A/B Test Engine** | 3가지 데이터셋으로 학습한 모델의 성능을 자동 비교 | pytest-benchmark, mlflow | P1 |
 | 6 | **Scenario Runner** | 검증 시나리오를 YAML로 정의하고 자동 실행 | Prefect, Airflow | P1 |
@@ -196,9 +206,11 @@
 ## 4. 단계별 준비 로드맵 (제안)
 
 ### Phase 1: 핵심 모델 Binary화 (2~3주)
-- [ ] af_ba_req_004(시뮬레이션) 완전 구현 + XGBoost/SVR/RF 학습 → `.joblib` 산출
-- [ ] af_ba_req_002(수명예측) scipy 분포적합 코드 → `sklearn` 기반 예측 모델로 재구성
-- [ ] af_ba_req_005(유사부품) KMeans+TF-IDF → `joblib` 저장 + 코사인 유사도 API화
+- [x] af_ba_req_004(시뮬레이션) 완전 구현 + GBR 학습 → `.joblib` 산출 ✅
+- [x] af_ba_req_005(유사부품) KMeans+TF-IDF → `joblib` 저장 + 코사인 유사도 API화 ✅
+- [ ] af_ba_req_002(수명예측) scipy 분포적합 → `sklearn` 기반 예측 모델로 재구성
+- [ ] af_ba_req_001(RAM) lifelines → 생존분석 ML 모델로 재구성
+- [ ] af_ba_req_007(IMQC) 집계 로직 → 회귀/분류 모델로 재구성
 - [ ] Model Serving API (BentoML) 프로토타입 개발
 
 ### Phase 2: 데이터 연계 및 검증 시나리오 (2주)
@@ -271,12 +283,15 @@
 
 ### 6.1 현재 위치
 - **합성데이터 플랫폼**: 생성·검증은 세계적으로도 경쟁력 있는 수준
-- **분석 통합 플랫폼**: af_ba_req_001은 완전 구현, 나머지 4개는 구조만 등록
-- **연결고리**: 두 플랫폼이 **물리적으로 분리**되어 있어 "합성데이터 → 분석 → 검증" End-to-End 흐름이 자동화되지 않음
+- **분석 통합 플랫폼**: **5개 모델 전체 완전 구현** (001/002/004/005/007)
+  - 001/002/007: 코드 기반 분석 + 시각화 + Streamlit UI
+  - 004/005: ML 모델 Binary + 실시간 Serving API + Streamlit UI
+- **연결고리**: 004 모델에서 **"합성데이터 → AI 모델 학습 → Serving"** 파이프라인이 실증됨
+  - 3자 비교(실데이터 vs 합성데이터 vs 시뮬레이션)는 Streamlit 멀티페이지 통합 필요
 
 ### 6.2 최우선 과제 (즉시 실행 필요)
-1. **af_ba_req_004 완전 구현 + Binary화**: 시뮬레이션 모델은 이미 ML 기반이라 가장 빠르게 Serving 가능
-2. **Model Serving Layer 추가**: BentoML 기반으로 1개 모델이라도 실시간 Inference 데모 확보
+1. **001/002/007 Binary화**: 3개 코드 기반 모델을 ML 모델로 재구현하여 `.joblib` 산출
+2. **통합 Model Serving Layer**: BentoML 기반으로 5개 모델 전체를 실시간 Inference 데모 확보
 3. **3자 비교 시나리오 파이프라인**: "실데이터 vs 합성데이터 vs 시뮬레이션"을 한 화면에서 보여주는 데모는 **제안 발표의 핵심 임팩트**
 
 ### 6.3 사업 제안 전략
@@ -296,6 +311,6 @@
 ---
 
 > **다음 회의까지 준비할 것**:  
-> ① af_ba_req_004 시뮬레이션 모델 1개 Binary화 + Serving API 데모  
-> ② "실데이터 vs 합성데이터" RAM 분석 결과 비교 화면 1장  
+> ① 001/002/007 3개 모델 Binary화 + 통합 Serving API 데모  
+> ② "실데이터 vs 합성데이터 vs 시뮬레이션" 3자 비교 Streamlit 화면  
 > ③ 통합 아키텍처 다이어그램 (PPT용) 1장

@@ -42,7 +42,6 @@ class BaseAnalysisService(ABC):
 
 class RAMAnalysisService(BaseAnalysisService):
     """af_ba_req_001 장비운용가용도분석"""
-    
     def _preprocess(...) -> pd.DataFrame
     def _create_timeline(...) -> pd.DataFrame
     def _calculate_durations(...) -> Tuple[...]
@@ -50,6 +49,28 @@ class RAMAnalysisService(BaseAnalysisService):
     def _calculate_ram_metrics(...) -> Dict[str, float]
     def _create_viz_data(...) -> pd.DataFrame
     def _generate_report(...) -> Path
+
+class LifeAnalysisService(BaseAnalysisService):
+    """af_ba_req_002 장비수명예측 — scipy/Fitter 분포적합"""
+    def _load_data(...) -> pd.DataFrame
+    def _create_use_data(...) -> Tuple[List[float], int]
+    def _find_best_distribution(...) -> Tuple[str, tuple, float]
+    def _calculate_metrics(...) -> Dict[str, float]
+    def _create_viz_data(...) -> pd.DataFrame
+
+class SimPredictionService:
+    """af_ba_req_004 시험소작업량예측 — GradientBoostingRegressor Serving"""
+    def predict(stl_num, difficulty, tech_grade, efficiency, maint_cycle, cons_mh) -> Dict
+
+class RecommendService:
+    """af_ba_req_005 유사부품추천 — KMeans+TF-IDF 코사인 유사도"""
+    def recommend(part_no, topn=10) -> pd.DataFrame
+
+class IMQCAnalysisService(BaseAnalysisService):
+    """af_ba_req_007 IMQC인원수급분석 — 등급현황+계획수립 병합"""
+    def _counts_es(...) -> pd.DataFrame
+    def _counting_total(...) -> pd.DataFrame
+    def _merge_results(...) -> pd.DataFrame
 ```
 
 ### 2.3 분석 결과 스키마
@@ -146,6 +167,118 @@ class AnalysisResult(BaseModel):
 | LogNormal | exp(μ + σ²/2) | `mu_`, `sigma_` |
 | Exponential | λ (lambda) | `lambda_` |
 | Weibull | λ · Γ(1 + 1/ρ) | `lambda_`, `rho_` |
+
+### 3.3 af_ba_req_002 수명 예측 흐름
+
+```
+[정밀측정폐품현황.xlsb]
+        │
+        ▼
+[Data Loader] ── pyxlsb → pn, acqdt, aprv_prcss_dttm
+        │
+        ▼
+[_create_use_data()]
+  ├─ (aprv_prcss_dttm - acqdt) / 365 → use_year
+  └─ 양수 값만 필터링
+        │
+        ▼
+[_find_best_distribution()]
+  ├─ Fitter: norm / expon / weibull_min
+  └─ KS-test p-value 기반 최적 분포 선택
+        │
+        ▼
+[_calculate_metrics()]
+  ├─ expected_lifetime = dist.mean(*params)
+  ├─ lifetime_10p = dist.ppf(0.1, *params)   (B10)
+  └─ lifetime_50p = dist.ppf(0.5, *params)   (B50)
+        │
+        ▼
+[Plotly 차트 생성]
+  ├─ pdf_{pn}.html  ── PDF + 점추정치 수직선
+  └─ cdf_{pn}.html  ── CDF + B10/B50 수직선
+```
+
+### 3.4 af_ba_req_004 시험소작업량예측 흐름
+
+```
+[InferenceSet + ValueRatio]
+        │
+        ▼
+[Feature Engineering]
+  ├─ 정비주기, 온도, 습도, 작업일수, 소모인시
+  ├─ 효율, 난이도_freq, 기술등급_freq
+  └─ 요일번호, 계절, year, week
+        │
+        ▼
+[MinMaxScaler.transform()]
+        │
+        ▼
+[GradientBoostingRegressor.predict()]
+        │
+        ▼
+[Calibration (q_090)]
+  ├─ y_pred: 점 추정치
+  ├─ pi_lower: 90% 예측구간 하한
+  └─ pi_upper: 90% 예측구간 상한
+        │
+        ▼
+[역추정] ── 목표 작업량 달성을 위한 최적 입력 변수 산출
+```
+
+### 3.5 af_ba_req_005 유사부품추천 흐름
+
+```
+[정밀측정품목현황.xlsb]
+        │
+        ▼
+[Text Feature Extraction]
+  ├─ pn, mntnc_rslt_actn_cd, wuc, wuc_desc 등 문자열 컬럼 결합
+  └─ TF-IDF 벡터화 (5000 features)
+        │
+        ▼
+[KMeans Clustering (n=50)]
+  └─ 342K 부품 → 50개 클러스터
+        │
+        ▼
+[NearestNeighbors (cosine metric)]
+  └─ 클러스터 내 코사인 유사도 기반 Top-N 검색
+        │
+        ▼
+[recommend(part_no)]
+  ├─ 입력 부품의 클러스터 할당
+  ├─ 동일 클러스터 내 유사도 계산
+  └─ 상위 N개 부품 + similarity 점수 반환
+```
+
+### 3.6 af_ba_req_007 IMQC 인원수급분석 흐름
+
+```
+[IMQC 등급현황.xlsx] ── 8개 시험소 시트, header=3
+        │
+        ▼
+[_counts_es()]
+  ├─ 시트명에서 시험소 번호 추출
+  ├─ "도량"/"전기/전자" 컬럼에서 등급(1~4) 추출
+  └─ 시험소/분야/등급별 인원 집계
+        │
+        ▼
+[IMQC 개선 및 관리항목.xlsx] + [21-25년 계획수립현황.xlsx]
+        │
+        ▼
+[_counting_total()]
+  ├─ WUC 코드 → 분야(도량/전기/전자) 매핑
+  ├─ 표준인시 / 5.05 / work_days → 필요 인원 산출
+  └─ 분야/시험소/월/난이도별 집계
+        │
+        ▼
+[_merge_results()]
+  └─ 현재 인원 vs 필요 인원 병합 (Outer Join)
+        │
+        ▼
+[Plotly 차트 생성]
+  ├─ imqc_current.html    ── 시험소별 현재 인원
+  └─ imqc_comparison.html ── 현재 vs 필요 인원 비교
+```
 
 ---
 

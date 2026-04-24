@@ -51,10 +51,10 @@
 │                   Analysis Engine                            │
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │  af_ba_req_001 (RAM)  ←── lifelines 분포 적합       │   │
-│  │  af_ba_req_002 (수명)  ── 구조 등록 완료            │   │
-│  │  af_ba_req_004 (시뮬)  ── 구조 등록 완료            │   │
-│  │  af_ba_req_005 (추천)  ── 구조 등록 완료            │   │
-│  │  af_ba_req_007 (IMQC)  ── 구조 등록 완료            │   │
+│  │  af_ba_req_002 (수명)  ←── scipy/Fitter 분포적합    │   │
+│  │  af_ba_req_004 (시뮬)  ←── GradientBoosting Serving │   │
+│  │  af_ba_req_005 (추천)  ←── KMeans+TF-IDF 코사인유사도│   │
+│  │  af_ba_req_007 (IMQC)  ←── 등급현황+계획수립 인원수급│   │
 │  └─────────────────────────────────────────────────────┘   │
 └───────────────────────────┬─────────────────────────────────┘
                             │
@@ -277,6 +277,27 @@ Content-Type: application/json
   "no_pclrt_idno": "ATN-00073737",
   "start_date": "2024-01-01",
   "end_date": "2024-12-31"
+}
+```
+
+### 수명 분석 실행
+```bash
+POST /api/v1/analyze/life
+Content-Type: application/json
+
+{
+  "pn": "부품번호00001"
+}
+```
+
+### IMQC 인원수급 분석 실행
+```bash
+POST /api/v1/analyze/imqc
+Content-Type: application/json
+
+{
+  "year": 2025,
+  "month": 1
 }
 ```
 
