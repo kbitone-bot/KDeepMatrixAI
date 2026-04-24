@@ -16,7 +16,7 @@ from backend.services.recommend_service import RecommendAnalysisService
 from backend.services.imqc_service import IMQCAnalysisService
 
 from frontend.components.model_selector import render_model_selector
-from frontend.components.input_forms import render_ram_inputs, render_placeholder_inputs
+from frontend.components.input_forms import render_ram_inputs, render_recommend_inputs, render_sim_inputs, render_placeholder_inputs
 from frontend.components.metric_cards import render_metric_cards
 from frontend.components.charts import render_charts_from_result, render_viz_dataframe
 from frontend.components.data_table import render_data_table
@@ -49,6 +49,10 @@ def main():
     # 입력 폼 렌더링
     if selected_model == "af_ba_req_001":
         params = render_ram_inputs()
+    elif selected_model == "af_ba_req_005":
+        params = render_recommend_inputs()
+    elif selected_model == "af_ba_req_004":
+        params = render_sim_inputs()
     else:
         params = render_placeholder_inputs(selected_model)
     
