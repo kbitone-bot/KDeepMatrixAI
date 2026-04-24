@@ -97,7 +97,7 @@ def main():
             
             # 시각화 데이터프레임 차트
             if result.viz_csv:
-                render_viz_dataframe(result.viz_csv)
+                render_viz_dataframe(result.viz_csv, model_id=selected_model)
             
             # 데이터 테이블 + 다운로드
             st.subheader("📋 결과 데이터")
