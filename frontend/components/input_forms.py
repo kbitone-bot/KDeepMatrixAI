@@ -45,6 +45,25 @@ def render_sim_inputs():
         "cons_mh": cons_mh,
     }
 
+def render_life_inputs():
+    st.sidebar.subheader("분석 조건 입력")
+    pn = st.sidebar.text_input("부품번호 (pn)", value="", help="비워두면 전체 부품번호 분석")
+    return {
+        "pn": pn if pn else None,
+    }
+
+def render_imqc_inputs():
+    st.sidebar.subheader("분석 조건 입력")
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        year = st.selectbox("년", [2021, 2022, 2023, 2024, 2025], index=4)
+    with col2:
+        month = st.selectbox("월", list(range(1, 13)), index=0)
+    return {
+        "year": year,
+        "month": month,
+    }
+
 def render_placeholder_inputs(model_id: str):
     st.sidebar.info(f"{model_id} 분석 조건 입력 UI는 준비 중입니다.")
     return {}

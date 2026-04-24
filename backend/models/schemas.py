@@ -32,6 +32,17 @@ class RAMAnalysisRequest(CustomBaseModel):
     end_date: Optional[str] = None    # YYYY-MM-DD
 
 
+class LifeAnalysisRequest(CustomBaseModel):
+    model_id: str = "af_ba_req_002"
+    pn: Optional[str] = None  # 비워두면 전체 부품번호
+
+
+class IMQCAnalysisRequest(CustomBaseModel):
+    model_id: str = "af_ba_req_007"
+    year: int = 2025
+    month: int = 1
+
+
 class RAMMetrics(CustomBaseModel):
     mtbf: float
     mttr: float

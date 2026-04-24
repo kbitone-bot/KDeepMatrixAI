@@ -16,7 +16,7 @@ from backend.services.recommend_service import RecommendAnalysisService
 from backend.services.imqc_service import IMQCAnalysisService
 
 from frontend.components.model_selector import render_model_selector
-from frontend.components.input_forms import render_ram_inputs, render_recommend_inputs, render_sim_inputs, render_placeholder_inputs
+from frontend.components.input_forms import render_ram_inputs, render_recommend_inputs, render_sim_inputs, render_life_inputs, render_imqc_inputs, render_placeholder_inputs
 from frontend.components.metric_cards import render_metric_cards
 from frontend.components.charts import render_charts_from_result, render_viz_dataframe
 from frontend.components.data_table import render_data_table
@@ -49,10 +49,14 @@ def main():
     # 입력 폼 렌더링
     if selected_model == "af_ba_req_001":
         params = render_ram_inputs()
+    elif selected_model == "af_ba_req_002":
+        params = render_life_inputs()
     elif selected_model == "af_ba_req_005":
         params = render_recommend_inputs()
     elif selected_model == "af_ba_req_004":
         params = render_sim_inputs()
+    elif selected_model == "af_ba_req_007":
+        params = render_imqc_inputs()
     else:
         params = render_placeholder_inputs(selected_model)
     
@@ -77,7 +81,14 @@ def main():
             
             # 지표 카드
             if result.metrics:
-                st.subheader("📊 RAM 핵심 지표")
+                if selected_model == "af_ba_req_001":
+                    st.subheader("📊 RAM 핵심 지표")
+                elif selected_model == "af_ba_req_002":
+                    st.subheader("📊 수명 예측 핵심 지표")
+                elif selected_model == "af_ba_req_007":
+                    st.subheader("📊 IMQC 인원 수급 핵심 지표")
+                else:
+                    st.subheader("📊 핵심 지표")
                 render_metric_cards(result.metrics)
             
             # 차트

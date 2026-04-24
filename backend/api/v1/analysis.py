@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
-from backend.models.schemas import AnalysisResult, RAMAnalysisRequest
+from backend.models.schemas import AnalysisResult, RAMAnalysisRequest, LifeAnalysisRequest, IMQCAnalysisRequest
 from backend.services.ram_service import RAMAnalysisService
 from backend.services.life_service import LifeAnalysisService
 from backend.services.sim_service import SimAnalysisService
@@ -20,6 +20,24 @@ SERVICE_MAP = {
 @router.post("/analyze/ram", response_model=AnalysisResult)
 def analyze_ram(req: RAMAnalysisRequest):
     service = RAMAnalysisService()
+    params = req.model_dump()
+    result = service.analyze(params)
+    if result.status == "failed":
+        raise HTTPException(status_code=400, detail=result.message)
+    return result
+
+@router.post("/analyze/life", response_model=AnalysisResult)
+def analyze_life(req: LifeAnalysisRequest):
+    service = LifeAnalysisService()
+    params = req.model_dump()
+    result = service.analyze(params)
+    if result.status == "failed":
+        raise HTTPException(status_code=400, detail=result.message)
+    return result
+
+@router.post("/analyze/imqc", response_model=AnalysisResult)
+def analyze_imqc(req: IMQCAnalysisRequest):
+    service = IMQCAnalysisService()
     params = req.model_dump()
     result = service.analyze(params)
     if result.status == "failed":
